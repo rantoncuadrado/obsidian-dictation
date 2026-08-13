@@ -1,0 +1,158 @@
+.dictation-status {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 5px;
+  font-weight: var(--font-semibold);
+  user-select: none;
+}
+
+.dictation-status-icon {
+  align-items: center;
+  display: inline-flex;
+}
+
+.dictation-status-icon svg {
+  height: 13px;
+  width: 13px;
+}
+
+.dictation-status.is-recording,
+.workspace-ribbon .clickable-icon.is-recording {
+  color: var(--color-red);
+}
+
+.dictation-status.is-recording .dictation-status-icon {
+  animation: dictation-pulse 1s ease-in-out infinite;
+}
+
+.dictation-mobile-record-button {
+  align-items: center;
+  background: var(--interactive-accent);
+  border: 0;
+  border-radius: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 76px);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 28%);
+  color: var(--text-on-accent);
+  display: flex;
+  height: 54px;
+  justify-content: center;
+  padding: 0;
+  position: fixed;
+  right: 16px;
+  transition:
+    top 140ms ease-out,
+    right 140ms ease-out,
+    background-color 140ms ease-out;
+  width: 54px;
+  z-index: var(--layer-popover, 1000);
+}
+
+.dictation-mobile-record-button svg {
+  height: 25px;
+  width: 25px;
+}
+
+.dictation-mobile-record-button.is-recording {
+  animation: dictation-mobile-recording-pulse 1s ease-in-out infinite;
+  background: var(--color-red);
+}
+
+.dictation-mobile-record-button.is-hidden {
+  display: none;
+}
+
+.dictation-mobile-record-button.is-viewport-positioned {
+  bottom: auto;
+}
+
+.dictation-mobile-record-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.dictation-actions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: var(--size-4-4);
+  width: 100%;
+}
+
+.dictation-actions > button {
+  min-height: 40px;
+  min-width: 0;
+}
+
+.dictation-recovery textarea {
+  box-sizing: border-box;
+  min-height: 180px;
+  resize: vertical;
+  width: 100%;
+}
+
+.dictation-hotkey-capture {
+  align-items: center;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  display: flex;
+  font-size: var(--font-ui-large);
+  font-weight: var(--font-semibold);
+  justify-content: center;
+  margin: var(--size-4-4) 0;
+  min-height: 72px;
+  padding: var(--size-4-4);
+}
+
+.dictation-warning {
+  background: var(--background-modifier-error-hover);
+  border-left: 3px solid var(--color-orange);
+  border-radius: var(--radius-s);
+  margin: var(--size-4-3) 0;
+  padding: var(--size-4-3);
+}
+
+@keyframes dictation-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes dictation-mobile-recording-pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px rgb(0 0 0 / 28%);
+  }
+
+  50% {
+    box-shadow:
+      0 4px 16px rgb(0 0 0 / 28%),
+      0 0 0 7px color-mix(in srgb, var(--color-red) 30%, transparent);
+  }
+}
+
+@media (max-width: 480px) {
+  .dictation-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dictation-status.is-recording .dictation-status-icon {
+    animation: none;
+  }
+
+  .dictation-mobile-record-button.is-recording {
+    animation: none;
+  }
+
+  .dictation-mobile-record-button {
+    transition: none;
+  }
+}

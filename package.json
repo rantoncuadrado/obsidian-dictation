@@ -1,0 +1,41 @@
+{
+  "name": "obsidian-dictation",
+  "version": "1.0.0",
+  "description": "Safe voice-to-text for Obsidian on desktop and mobile.",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rantoncuadrado/obsidian-dictation.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rantoncuadrado/obsidian-dictation/issues"
+  },
+  "homepage": "https://github.com/rantoncuadrado/obsidian-dictation#readme",
+  "keywords": [
+    "obsidian",
+    "dictation",
+    "speech-to-text",
+    "transcription"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "check": "npm run lint && tsc --noEmit && node --check main.js",
+    "dev": "node esbuild.config.mjs",
+    "lint": "eslint . --max-warnings=0",
+    "test": "tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@typescript-eslint/parser": "^8.67.0",
+    "esbuild": "^0.25.9",
+    "eslint": "^9.39.5",
+    "eslint-plugin-obsidianmd": "^0.4.1",
+    "obsidian": "^1.11.4",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
