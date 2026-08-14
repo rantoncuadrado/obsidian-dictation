@@ -183,6 +183,7 @@ export class DictationSettingTab extends PluginSettingTab {
     }
 
     this.heading(t("languageHeading"));
+    let customLanguageSetting: Setting | null = null;
     this.keyedSetting(containerEl, "language")
       .setName(t("language"))
       .setDesc(t("languageDescription"))
@@ -190,20 +191,26 @@ export class DictationSettingTab extends PluginSettingTab {
         for (const [value, label] of LANGUAGES) dropdown.addOption(value, label);
         dropdown.setValue(settings.language).onChange(async (value) => {
           settings.language = value;
-          await this.saveAndRefresh("language");
+          await this.host.saveSettings();
+          customLanguageSetting?.settingEl.classList.toggle(
+            "dictation-setting-hidden",
+            value !== CUSTOM_LANGUAGE_VALUE,
+          );
         });
       });
-    if (settings.language === CUSTOM_LANGUAGE_VALUE) {
-      new Setting(containerEl)
-        .setName(t("customLanguage"))
-        .setDesc(t("customLanguageDescription"))
-        .addText((text) =>
-          text.setValue(settings.customLanguage).onChange(async (value) => {
-            settings.customLanguage = value.trim();
-            await this.host.saveSettings();
-          }),
-        );
-    }
+    customLanguageSetting = new Setting(containerEl)
+      .setName(t("customLanguage"))
+      .setDesc(t("customLanguageDescription"))
+      .addText((text) =>
+        text.setValue(settings.customLanguage).onChange(async (value) => {
+          settings.customLanguage = value.trim();
+          await this.host.saveSettings();
+        }),
+      );
+    customLanguageSetting.settingEl.classList.toggle(
+      "dictation-setting-hidden",
+      settings.language !== CUSTOM_LANGUAGE_VALUE,
+    );
 
     this.heading(t("interactionHeading"));
     this.keyedSetting(containerEl, "after-recording")
