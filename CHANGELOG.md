@@ -2,6 +2,13 @@
 
 All notable changes to Dictation are documented here.
 
+## 1.0.1
+
+- Preserve the selected SecretStorage API key when changing transcription
+  language.
+- Update the custom-language field in place instead of rebuilding the entire
+  settings screen.
+
 ## 1.0.0
 
 - Initial public release for desktop and mobile.
