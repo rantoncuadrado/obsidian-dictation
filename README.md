@@ -50,15 +50,24 @@ when the vault itself is synchronized.
 
 ## Usage
 
+### Desktop 
+
 On desktop, click the ribbon microphone, click **Dictation** in the status bar,
 or run **Start or stop recording** from the command palette. You can assign an
 Obsidian hotkey to that command. Optional push-to-talk is a separate setting:
 hold your chosen shortcut to record and release it to stop.
 
+<img width="50%" alt="Desktop" src="https://github.com/user-attachments/assets/0794c85d-7e19-4d78-930d-3e6db10bf635" />
+
+
+### Mobile
+
 On mobile, open a Markdown note and tap the floating microphone. It remains
 above the keyboard and editing toolbar when a cursor or text selection is
 active. Tap the red stop button when finished. Push-to-talk is desktop-only
 because mobile operating systems do not provide a dependable held-key cycle.
+
+https://github.com/user-attachments/assets/cec224d9-49a8-409a-8b22-e1a0965206d1
 
 When recording stops, the default dialog offers:
 
