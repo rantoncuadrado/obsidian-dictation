@@ -32,7 +32,12 @@ import {
 } from "./constants";
 import { createEditorAnchor, insertAtAnchor } from "./destination";
 import { eventMatchesHotkey, isTextInputTarget, parseHotkey } from "./hotkey";
-import { DICTATION_ICON_ID, DICTATION_ICON_SVG } from "./icon";
+import {
+  DICTATION_ICON_ID,
+  DICTATION_ICON_SVG,
+  DICTATION_STOP_ICON_ID,
+  DICTATION_STOP_ICON_SVG,
+} from "./icon";
 import { createTranslator } from "./i18n";
 import { calculateMobileButtonPosition } from "./mobile-position";
 import { RecordingDecisionModal, TranscriptRecoveryModal } from "./modals";
@@ -73,7 +78,11 @@ export default class DictationPlugin extends Plugin {
   override async onload(): Promise<void> {
     await this.loadSettings();
     addIcon(DICTATION_ICON_ID, DICTATION_ICON_SVG);
-    this.register(() => removeIcon(DICTATION_ICON_ID));
+    addIcon(DICTATION_STOP_ICON_ID, DICTATION_STOP_ICON_SVG);
+    this.register(() => {
+      removeIcon(DICTATION_ICON_ID);
+      removeIcon(DICTATION_STOP_ICON_ID);
+    });
     this.addCommand({
       id: COMMAND_ID,
       name: this.t("command"),
@@ -201,7 +210,7 @@ export default class DictationPlugin extends Plugin {
     if (this.statusBar) {
       this.statusBar.empty();
       const icon = this.statusBar.createSpan({ cls: "dictation-status-icon" });
-      setIcon(icon, this.state === "recording" ? "square" : DICTATION_ICON_ID);
+      setIcon(icon, this.state === "recording" ? DICTATION_STOP_ICON_ID : DICTATION_ICON_ID);
       this.statusBar.createSpan({ text: label });
       this.statusBar.toggleClass("is-recording", this.state === "recording");
       this.statusBar.setAttribute("aria-label", this.state === "recording" ? this.t("stopRecording") : this.t("command"));
@@ -216,7 +225,7 @@ export default class DictationPlugin extends Plugin {
     const canStart = ["idle", "completed", "failed-audio-kept"].includes(this.state);
     const hasActiveNote = Boolean(this.app.workspace.getActiveViewOfType(MarkdownView)?.file);
     this.mobileButton.empty();
-    setIcon(this.mobileButton, isRecording ? "square" : DICTATION_ICON_ID);
+    setIcon(this.mobileButton, isRecording ? DICTATION_STOP_ICON_ID : DICTATION_ICON_ID);
     this.mobileButton.toggleClass("is-recording", isRecording);
     this.mobileButton.toggleClass("is-hidden", !hasActiveNote && !isRecording);
     this.mobileButton.disabled = !isRecording && !canStart;
