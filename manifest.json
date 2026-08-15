@@ -1,7 +1,7 @@
 {
   "id": "dictation",
   "name": "Dictation",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "minAppVersion": "1.11.4",
   "description": "Record speech on desktop and mobile, transcribe it with your chosen provider, and safely insert it at the captured cursor.",
   "author": "Raul Anton",

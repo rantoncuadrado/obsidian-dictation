@@ -1,5 +1,9 @@
 # Dictation
 
+<p align="center">
+  <img src="assets/dictation.svg" width="128" height="128" alt="Dictation logo">
+</p>
+
 Dictation is a focused voice-to-text plugin for Obsidian. It records through
 Obsidian's core **Audio recorder**, transcribes with the provider you choose,
 and inserts the result at the cursor captured when recording began.
@@ -179,3 +183,5 @@ GitHub release attaches the minified `main.js`, `manifest.json`, and
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and
 [DESIGN.md](DESIGN.md). Dictation is licensed under [GPL-3.0](LICENSE).
+Third-party artwork and its attribution are documented in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
