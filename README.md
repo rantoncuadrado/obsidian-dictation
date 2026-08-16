@@ -52,6 +52,12 @@ After installing and enabling Dictation:
 SecretStorage is device-local. Repeat step 4 on every computer or phone, even
 when the vault itself is synchronized.
 
+More setup options:
+<img width="40%" alt="Monosnap Settings - Pepito Grillo - Obsidian 1 13 7 2026-08-16 13-10-38" src="https://github.com/user-attachments/assets/21e80762-58f2-42fa-a25e-13f5f42daa58" />
+<img width="40%" alt="Monosnap Settings - Pepito Grillo - Obsidian 1 13 7 2026-08-16 13-10-54" src="https://github.com/user-attachments/assets/c83f4826-2596-4f24-ab82-8bcaacbf798f" />
+
+
+
 ## Usage
 
 ### Desktop 
