@@ -19,7 +19,6 @@ import {
   safelyTrashAudio,
 } from "./audio-lifecycle";
 import {
-  AUDIO_EXTENSIONS,
   CLEANUP_INTERVAL_MS,
   COMMAND_ID,
   CORE_RECORDING_START_COMMAND,
@@ -28,6 +27,7 @@ import {
   CUSTOM_MODEL_VALUE,
   DEFAULT_SETTINGS,
   DEFAULT_RECORDINGS_FOLDER,
+  isAudioExtension,
   PROVIDERS,
 } from "./constants";
 import { createEditorAnchor, insertAtAnchor } from "./destination";
@@ -40,7 +40,11 @@ import {
 } from "./icon";
 import { createTranslator } from "./i18n";
 import { calculateMobileButtonPosition } from "./mobile-position";
-import { RecordingDecisionModal, TranscriptRecoveryModal } from "./modals";
+import {
+  AudioFileSuggestModal,
+  RecordingDecisionModal,
+  TranscriptRecoveryModal,
+} from "./modals";
 import { providerEndpoint, requestTranscription } from "./providers";
 import { DictationSettingTab } from "./settings-tab";
 import type { DictationSettings, EditorAnchor, PluginState, ProviderId } from "./types";
@@ -53,7 +57,7 @@ function delay(milliseconds: number): Promise<void> {
 }
 
 function isAudioFile(file: TAbstractFile): file is TFile {
-  return file instanceof TFile && AUDIO_EXTENSIONS.has(file.extension.toLowerCase());
+  return file instanceof TFile && isAudioExtension(file.extension);
 }
 
 export default class DictationPlugin extends Plugin {
@@ -87,6 +91,11 @@ export default class DictationPlugin extends Plugin {
       id: COMMAND_ID,
       name: this.t("command"),
       callback: () => void this.toggleDictation(),
+    });
+    this.addCommand({
+      id: "transcribe-existing-recording",
+      name: this.t("transcribeExistingCommand"),
+      callback: () => this.promptTranscribeExistingFile(),
     });
     this.ribbon = this.addRibbonIcon(DICTATION_ICON_ID, this.t("command"), () => {
       void this.toggleDictation();
@@ -133,6 +142,17 @@ export default class DictationPlugin extends Plugin {
     this.registerEvent(this.app.vault.on("create", (file) => this.onFileCreated(file)));
     this.registerEvent(this.app.workspace.on("active-leaf-change", () => this.updateStatus()));
     this.registerEvent(this.app.workspace.on("file-open", () => this.updateStatus()));
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (!isAudioFile(file)) return;
+        menu.addItem((item) =>
+          item
+            .setTitle(this.t("transcribeMenuItem"))
+            .setIcon(DICTATION_ICON_ID)
+            .onClick(() => void this.transcribeExistingFile(file)),
+        );
+      }),
+    );
     this.registerDomEvent(document, "keydown", (event) => this.onPushToTalkDown(event), true);
     this.registerDomEvent(document, "keyup", (event) => this.onPushToTalkUp(event), true);
     this.registerDomEvent(window, "blur", () => this.releasePushToTalk());
@@ -308,12 +328,22 @@ export default class DictationPlugin extends Plugin {
     this.statusInterval = null;
   }
 
-  private captureDestination(): EditorAnchor | null {
-    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+  private anchorFromView(view: MarkdownView | null): EditorAnchor | null {
     if (!view?.file) return null;
     const content = view.editor.getValue();
     const offset = view.editor.posToOffset(view.editor.getCursor());
     return createEditorAnchor(view.file.path, content, offset);
+  }
+
+  private captureDestination(): EditorAnchor | null {
+    return this.anchorFromView(this.app.workspace.getActiveViewOfType(MarkdownView));
+  }
+
+  private captureManualDestination(): EditorAnchor | null {
+    const active = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (active) return this.anchorFromView(active);
+    const recent = this.app.workspace.getMostRecentLeaf()?.view;
+    return recent instanceof MarkdownView ? this.anchorFromView(recent) : null;
   }
 
   private resetRecordingContext(): void {
@@ -460,34 +490,39 @@ export default class DictationPlugin extends Plugin {
     return secret;
   }
 
+  private async fetchTranscript(audio: TFile): Promise<string> {
+    const provider = this.settings.provider;
+    const endpoint = providerEndpoint(provider, this.settings.customEndpoint);
+    const model = this.selectedModel(provider);
+    if (!endpoint) throw new Error(this.t("configureEndpoint"));
+    if (!model) throw new Error(this.t("configureModel"));
+    const secret = this.secretFor(provider);
+    return requestTranscription({
+      provider,
+      endpoint,
+      model,
+      language: this.selectedLanguage(),
+      secret,
+      customAuthScheme: this.settings.customAuthScheme,
+      customResponsePath: this.settings.customResponsePath,
+      fileName: audio.name,
+      extension: audio.extension,
+      audio: await this.app.vault.readBinary(audio),
+    });
+  }
+
   private async transcribe(audio: TFile): Promise<void> {
     if (!this.anchor) {
       this.fail("The original note destination is unavailable.");
       return;
     }
+    const anchor = this.anchor;
     try {
-      const provider = this.settings.provider;
-      const endpoint = providerEndpoint(provider, this.settings.customEndpoint);
-      const model = this.selectedModel(provider);
-      if (!endpoint) throw new Error(this.t("configureEndpoint"));
-      if (!model) throw new Error(this.t("configureModel"));
-      const secret = this.secretFor(provider);
       this.setState("transcribing");
       new Notice(this.t("transcribing", { name: audio.name }), 4_000);
-      const transcript = await requestTranscription({
-        provider,
-        endpoint,
-        model,
-        language: this.selectedLanguage(),
-        secret,
-        customAuthScheme: this.settings.customAuthScheme,
-        customResponsePath: this.settings.customResponsePath,
-        fileName: audio.name,
-        extension: audio.extension,
-        audio: await this.app.vault.readBinary(audio),
-      });
+      const transcript = await this.fetchTranscript(audio);
       this.setState("inserting");
-      const inserted = await this.insertTranscript(transcript);
+      const inserted = await this.insertTranscript(anchor, transcript);
       if (!inserted) {
         new TranscriptRecoveryModal(this.app, this.t, transcript).open();
         this.fail(this.t("recovered"));
@@ -499,18 +534,68 @@ export default class DictationPlugin extends Plugin {
         audio,
         this.settings.recordingsFolder || DEFAULT_RECORDINGS_FOLDER,
       );
-      await removeAudioReferenceFromNote(this.app, this.anchor.path, originalAudio);
-      await removeAudioReferenceFromNote(this.app, this.anchor.path, managedFile);
-      await this.applyRetention(managedFile, this.anchor.path);
+      await removeAudioReferenceFromNote(this.app, anchor.path, originalAudio);
+      await removeAudioReferenceFromNote(this.app, anchor.path, managedFile);
+      await this.applyRetention(managedFile, anchor.path);
       this.complete(this.t("transcriptionComplete"));
     } catch (error) {
       this.fail(safeErrorMessage(error));
     }
   }
 
-  private async insertTranscript(transcript: string): Promise<boolean> {
-    const anchor = this.anchor;
-    if (!anchor) return false;
+  private promptTranscribeExistingFile(): void {
+    if (!["idle", "completed", "failed-audio-kept"].includes(this.state)) {
+      new Notice(this.t("transcribeBusy"), 6_000);
+      return;
+    }
+    const files = this.app.vault
+      .getFiles()
+      .filter(isAudioFile)
+      .sort((left, right) => right.stat.mtime - left.stat.mtime);
+    if (files.length === 0) {
+      new Notice(this.t("noRecordingsFound"), 5_000);
+      return;
+    }
+    new AudioFileSuggestModal(
+      this.app,
+      files,
+      this.t,
+      (file) => void this.transcribeExistingFile(file),
+    ).open();
+  }
+
+  private async transcribeExistingFile(audio: TFile): Promise<void> {
+    if (!["idle", "completed", "failed-audio-kept"].includes(this.state)) {
+      new Notice(this.t("transcribeBusy"), 6_000);
+      return;
+    }
+    const anchor = this.captureManualDestination();
+    if (!anchor) {
+      new Notice(this.t("transcribeNoDestination"), 6_000);
+      return;
+    }
+    this.setState("transcribing");
+    new Notice(this.t("transcribing", { name: audio.name }), 4_000);
+    try {
+      const transcript = await this.fetchTranscript(audio);
+      this.setState("inserting");
+      const inserted = await this.insertTranscript(anchor, transcript);
+      if (!inserted) {
+        new TranscriptRecoveryModal(this.app, this.t, transcript).open();
+        new Notice(this.t("error", { detail: this.t("recovered") }), 8_000);
+        return;
+      }
+      new Notice(this.t("transcriptionComplete"), 3_000);
+    } catch (error) {
+      new Notice(this.t("error", { detail: safeErrorMessage(error) }), 8_000);
+    } finally {
+      if (this.state === "transcribing" || this.state === "inserting") {
+        this.setState("idle");
+      }
+    }
+  }
+
+  private async insertTranscript(anchor: EditorAnchor, transcript: string): Promise<boolean> {
     const target = this.app.vault.getAbstractFileByPath(anchor.path);
     if (!(target instanceof TFile)) return false;
     let inserted = false;

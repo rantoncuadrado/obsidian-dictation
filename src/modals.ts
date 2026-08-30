@@ -1,5 +1,29 @@
-import { App, Modal, Notice, Platform } from "obsidian";
+import { App, FuzzySuggestModal, Modal, Notice, Platform, TFile } from "obsidian";
 import { hotkeyFromKeyboardEvent } from "./hotkey";
+
+export class AudioFileSuggestModal extends FuzzySuggestModal<TFile> {
+  constructor(
+    app: App,
+    private readonly files: TFile[],
+    t: (key: string) => string,
+    private readonly onChoose: (file: TFile) => void,
+  ) {
+    super(app);
+    this.setPlaceholder(t("pickRecording"));
+  }
+
+  getItems(): TFile[] {
+    return this.files;
+  }
+
+  getItemText(file: TFile): string {
+    return file.path;
+  }
+
+  onChooseItem(file: TFile): void {
+    this.onChoose(file);
+  }
+}
 
 export class RecordingDecisionModal extends Modal {
   private resolved = false;
