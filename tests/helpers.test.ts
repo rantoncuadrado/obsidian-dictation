@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { DEFAULT_RECORDINGS_FOLDER, DEFAULT_SETTINGS } from "../src/constants";
+import { DEFAULT_RECORDINGS_FOLDER, DEFAULT_SETTINGS, isAudioExtension } from "../src/constants";
 import { createEditorAnchor, insertAtAnchor, resolveAnchorOffset } from "../src/destination";
 import { eventMatchesHotkey, hotkeyFromKeyboardEvent, isValidPushToTalkHotkey } from "../src/hotkey";
 import { calculateMobileButtonPosition } from "../src/mobile-position";
@@ -10,6 +10,13 @@ test("new installations retain managed recordings for 21 days", () => {
   assert.equal(DEFAULT_SETTINGS.retentionPolicy, "scheduled");
   assert.equal(DEFAULT_SETTINGS.retentionDays, 21);
   assert.equal(DEFAULT_SETTINGS.recordingsFolder, DEFAULT_RECORDINGS_FOLDER);
+});
+
+test("audio files are recognized by extension, case-insensitively", () => {
+  assert.equal(isAudioExtension("webm"), true);
+  assert.equal(isAudioExtension("M4A"), true);
+  assert.equal(isAudioExtension("md"), false);
+  assert.equal(isAudioExtension(""), false);
 });
 
 test("the mobile button follows the visible viewport above the keyboard", () => {
