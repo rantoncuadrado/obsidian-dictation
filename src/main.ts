@@ -9,6 +9,7 @@ import {
   setIcon,
   TFile,
   TAbstractFile,
+  View,
 } from "obsidian";
 import {
   cleanExpiredAudio,
@@ -30,7 +31,7 @@ import {
   isAudioExtension,
   PROVIDERS,
 } from "./constants";
-import { createEditorAnchor, insertAtAnchor } from "./destination";
+import { chooseManualDestinationView, createEditorAnchor, insertAtAnchor } from "./destination";
 import { eventMatchesHotkey, isTextInputTarget, parseHotkey } from "./hotkey";
 import {
   DICTATION_ICON_ID,
@@ -340,10 +341,12 @@ export default class DictationPlugin extends Plugin {
   }
 
   private captureManualDestination(): EditorAnchor | null {
-    const active = this.app.workspace.getActiveViewOfType(MarkdownView);
-    if (active) return this.anchorFromView(active);
-    const recent = this.app.workspace.getMostRecentLeaf()?.view;
-    return recent instanceof MarkdownView ? this.anchorFromView(recent) : null;
+    const view = chooseManualDestinationView<View>(
+      this.app.workspace.getActiveViewOfType(MarkdownView),
+      this.app.workspace.getMostRecentLeaf()?.view ?? null,
+      (candidate): candidate is MarkdownView => candidate instanceof MarkdownView,
+    );
+    return this.anchorFromView(view instanceof MarkdownView ? view : null);
   }
 
   private resetRecordingContext(): void {
@@ -551,7 +554,7 @@ export default class DictationPlugin extends Plugin {
     const files = this.app.vault
       .getFiles()
       .filter(isAudioFile)
-      .sort((left, right) => right.stat.mtime - left.stat.mtime);
+      .sort((left, right) => right.stat.ctime - left.stat.ctime);
     if (files.length === 0) {
       new Notice(this.t("noRecordingsFound"), 5_000);
       return;
@@ -581,11 +584,13 @@ export default class DictationPlugin extends Plugin {
       this.setState("inserting");
       const inserted = await this.insertTranscript(anchor, transcript);
       if (!inserted) {
-        new TranscriptRecoveryModal(this.app, this.t, transcript).open();
-        new Notice(this.t("error", { detail: this.t("recovered") }), 8_000);
+        new TranscriptRecoveryModal(this.app, this.t, transcript, "recoveredNoAudio").open();
+        new Notice(this.t("recoveredNoAudio"), 8_000);
         return;
       }
-      new Notice(this.t("transcriptionComplete"), 3_000);
+      this.settleCompleted(
+        this.t("transcriptInsertedInto", { name: anchor.path.replace(/\.md$/u, "") }),
+      );
     } catch (error) {
       new Notice(this.t("error", { detail: safeErrorMessage(error) }), 8_000);
     } finally {
@@ -635,13 +640,17 @@ export default class DictationPlugin extends Plugin {
     }
   }
 
-  private complete(message: string): void {
+  private settleCompleted(message: string): void {
     this.setState("completed");
     new Notice(message, 3_000);
-    this.resetRecordingContext();
     window.setTimeout(() => {
       if (this.state === "completed") this.setState("idle");
     }, 1_000);
+  }
+
+  private complete(message: string): void {
+    this.settleCompleted(message);
+    this.resetRecordingContext();
   }
 
   private fail(detail: string): void {

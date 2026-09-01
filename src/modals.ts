@@ -69,6 +69,7 @@ export class TranscriptRecoveryModal extends Modal {
     app: App,
     private readonly t: (key: string) => string,
     private readonly transcript: string,
+    private readonly descriptionKey = "recovered",
   ) {
     super(app);
   }
@@ -76,7 +77,7 @@ export class TranscriptRecoveryModal extends Modal {
   override onOpen(): void {
     this.contentEl.addClass("dictation-recovery");
     this.contentEl.createEl("h2", { text: this.t("recoveryTitle") });
-    this.contentEl.createEl("p", { text: this.t("recovered") });
+    this.contentEl.createEl("p", { text: this.t(this.descriptionKey) });
     const textarea = this.contentEl.createEl("textarea", {
       attr: { readonly: "", "aria-label": this.t("recoveryTitle") },
     });

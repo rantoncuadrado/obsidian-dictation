@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { DEFAULT_RECORDINGS_FOLDER, DEFAULT_SETTINGS, isAudioExtension } from "../src/constants";
-import { createEditorAnchor, insertAtAnchor, resolveAnchorOffset } from "../src/destination";
+import {
+  chooseManualDestinationView,
+  createEditorAnchor,
+  insertAtAnchor,
+  resolveAnchorOffset,
+} from "../src/destination";
 import { eventMatchesHotkey, hotkeyFromKeyboardEvent, isValidPushToTalkHotkey } from "../src/hotkey";
 import { calculateMobileButtonPosition } from "../src/mobile-position";
 import { normalizeTranscript, removeAudioReferences, safeErrorMessage } from "../src/utils";
@@ -50,6 +55,18 @@ test("the mobile button follows the visible viewport above the keyboard", () => 
     ),
     { top: 400, right: 16 },
   );
+});
+
+test("manual destination prefers the active note, then a most-recent note, else nothing", () => {
+  const active = { id: "active" };
+  const note = { id: "note" };
+  const graph = { id: "graph" };
+  const isNote = (view: { id: string }) => view.id === "active" || view.id === "note";
+  assert.equal(chooseManualDestinationView(active, note, isNote), active);
+  assert.equal(chooseManualDestinationView(active, null, isNote), active);
+  assert.equal(chooseManualDestinationView(null, note, isNote), note);
+  assert.equal(chooseManualDestinationView(null, graph, isNote), null);
+  assert.equal(chooseManualDestinationView(null, null, isNote), null);
 });
 
 test("an unchanged cursor anchor resolves exactly", () => {
