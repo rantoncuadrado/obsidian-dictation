@@ -20,6 +20,10 @@ export const AUDIO_EXTENSIONS = new Set([
   "webm",
 ]);
 
+export function isAudioExtension(extension: string): boolean {
+  return AUDIO_EXTENSIONS.has(extension.toLowerCase());
+}
+
 export const PROVIDERS: Record<string, ProviderDefinition> = {
   openai: {
     id: "openai",

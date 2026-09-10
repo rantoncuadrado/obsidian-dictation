@@ -1,5 +1,29 @@
-import { App, Modal, Notice, Platform } from "obsidian";
+import { App, FuzzySuggestModal, Modal, Notice, Platform, TFile } from "obsidian";
 import { hotkeyFromKeyboardEvent } from "./hotkey";
+
+export class AudioFileSuggestModal extends FuzzySuggestModal<TFile> {
+  constructor(
+    app: App,
+    private readonly files: TFile[],
+    t: (key: string) => string,
+    private readonly onChoose: (file: TFile) => void,
+  ) {
+    super(app);
+    this.setPlaceholder(t("pickRecording"));
+  }
+
+  getItems(): TFile[] {
+    return this.files;
+  }
+
+  getItemText(file: TFile): string {
+    return file.path;
+  }
+
+  onChooseItem(file: TFile): void {
+    this.onChoose(file);
+  }
+}
 
 export class RecordingDecisionModal extends Modal {
   private resolved = false;
@@ -45,6 +69,7 @@ export class TranscriptRecoveryModal extends Modal {
     app: App,
     private readonly t: (key: string) => string,
     private readonly transcript: string,
+    private readonly descriptionKey = "recovered",
   ) {
     super(app);
   }
@@ -52,7 +77,7 @@ export class TranscriptRecoveryModal extends Modal {
   override onOpen(): void {
     this.contentEl.addClass("dictation-recovery");
     this.contentEl.createEl("h2", { text: this.t("recoveryTitle") });
-    this.contentEl.createEl("p", { text: this.t("recovered") });
+    this.contentEl.createEl("p", { text: this.t(this.descriptionKey) });
     const textarea = this.contentEl.createEl("textarea", {
       attr: { readonly: "", "aria-label": this.t("recoveryTitle") },
     });

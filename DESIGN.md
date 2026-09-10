@@ -25,6 +25,12 @@ Push-to-talk has no default shortcut to avoid colliding with Obsidian or OS
 shortcuts. It does not change the post-recording policy: **Ask every time** is
 still the default.
 
+A third entry point, **Transcribe an existing recording**, is exposed through
+the command palette and the file menu. It sends an audio file the user picks
+through the same provider adapters and inserts the result at the cursor
+captured in the active note. It does not record, does not use the
+post-recording policy, and never modifies the selected file.
+
 ## State machine and concurrency
 
 ```text
@@ -82,6 +88,9 @@ before audio is uploaded.
    size, and mtime still match.
 6. A reference from a note other than the original target prevents deletion.
 7. There is no generic orphan-audio sweep.
+8. Transcribing an existing user-selected recording inserts text only. It
+   never moves, renames, trashes, or schedules retention for that file, and
+   touches no note beyond inserting at the captured cursor.
 
 After successful insertion, the recorder embed is removed from the target note
 and the audio is moved to the managed recordings folder through the
@@ -99,8 +108,8 @@ Obsidian's core Audio recorder command IDs and device microphone permissions.
 
 Automated tests cover anchor resolution (including recorder embeds and
 ambiguity), hotkey validation/matching, transcript normalization, secret
-redaction, and embed removal. TypeScript strict checking and production
-bundling run on every build.
+redaction, embed removal, and audio-extension detection. TypeScript strict
+checking and production bundling run on every build.
 
 Manual release checks remain necessary for:
 
@@ -109,4 +118,6 @@ Manual release checks remain necessary for:
 - SecretStorage setup on each device;
 - external file sync or rename races;
 - Obsidian trash behavior and automatic link updates;
-- every provider's current endpoint/model contract.
+- every provider's current endpoint/model contract;
+- transcribing an existing recording, including the no-active-note and
+  no-audio-in-vault cases and concurrency with a live recording.

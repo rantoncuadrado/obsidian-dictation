@@ -87,6 +87,19 @@ When recording stops, the default dialog offers:
 
 Closing the dialog means **Keep audio**.
 
+### Transcribe an existing recording
+
+To transcribe audio you already have — a recording you kept, one whose
+transcription failed, or a voice memo synced into the vault — run
+**Transcribe an existing recording** from the command palette and pick the
+file, or right-click an audio file and choose **Transcribe recording**.
+
+The transcript is inserted at the cursor in the active note, using the same
+provider, model, and language as live recording. The source audio file is
+never moved, renamed, or deleted, and audio retention does not apply to it.
+If the cursor position cannot be located safely, the transcript opens in the
+copyable recovery dialog instead.
+
 ## Providers
 
 | Provider | Managed endpoint | Suggested models |

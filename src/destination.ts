@@ -1,5 +1,20 @@
 import type { EditorAnchor } from "./types";
 
+/**
+ * Choose the view a manually triggered transcription should insert into:
+ * the active Markdown view when there is one, otherwise the most recently
+ * active leaf but only when it is itself a Markdown view.
+ */
+export function chooseManualDestinationView<V>(
+  activeMarkdownView: V | null | undefined,
+  mostRecentView: V | null | undefined,
+  isMarkdownView: (view: V) => boolean,
+): V | null {
+  if (activeMarkdownView) return activeMarkdownView;
+  if (mostRecentView && isMarkdownView(mostRecentView)) return mostRecentView;
+  return null;
+}
+
 export function createEditorAnchor(
   path: string,
   content: string,

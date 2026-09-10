@@ -2,6 +2,12 @@
 
 All notable changes to Dictation are documented here.
 
+## Unreleased
+
+- Add **Transcribe an existing recording**: transcribe an audio file already
+  in the vault from the command palette or the file-menu item, inserting the
+  result at the cursor. The source file is never moved, renamed, or deleted.
+
 ## 1.0.1
 
 - Preserve the selected SecretStorage API key when changing transcription
